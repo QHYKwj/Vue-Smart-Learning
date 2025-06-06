@@ -1,5 +1,5 @@
 <template>
-  <Vbar />
+  <Vbar2 />
   <v-app>
     <v-main>
       <v-container>
@@ -11,5 +11,6 @@
 </template>
 
 <script setup>
-import Main from "@/components/Main.vue";
+  import Main from '@/components/Main.vue';
+  import Vbar2 from '@/components/Vbar2.vue';
 </script>

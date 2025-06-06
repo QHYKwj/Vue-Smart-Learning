@@ -9,11 +9,10 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AppFooter: typeof import('./src/components/AppFooter.vue')['default']
-    DefaultLayout: typeof import('@/layout/componets/DefaultLayout.vue')['default']
-    Hello: typeof import('./src/components/Hello.vue')['default']
+    BackGround: typeof import('./src/components/BackGround.vue')['default']
+    ChatView: typeof import('./src/components/ChatView.vue')['default']
+    ForgotPwd: typeof import('./src/components/ForgotPwd.vue')['default']
     HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
-    Introduce: typeof import('@/layout/componets/Introduce.vue')['default']
-    Login: typeof import('./src/components/Login.vue')['default']
     LoginForm: typeof import('./src/components/LoginForm.vue')['default']
     Main: typeof import('./src/components/Main.vue')['default']
     Navigate: typeof import('./src/components/Navigate.vue')['default']
@@ -21,8 +20,11 @@ declare module 'vue' {
     RegisterForm: typeof import('./src/components/RegisterForm.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    Settings: typeof import('./src/components/Settings.vue')['default']
     TaskManager: typeof import('./src/components/TaskManager.vue')['default']
     TaskTimeline: typeof import('./src/components/TaskTimeline.vue')['default']
     Vbar: typeof import('./src/components/Vbar.vue')['default']
+    Vbar2: typeof import('./src/components/Vbar2.vue')['default']
+    VideoView: typeof import('./src/components/VideoView.vue')['default']
   }
 }

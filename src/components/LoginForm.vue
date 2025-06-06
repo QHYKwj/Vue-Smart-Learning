@@ -21,22 +21,23 @@
               :rules="passwordRules"
               type="password"
             />
-            <v-checkbox
-              v-model="checkbox"
-              label="Do you agree?"
-              required
-              :rules="[v => !!v || 'You must agree to continue!']"
-            />
-            <v-btn style="margin-bottom: 10px" type="submit" @click="login">Login</v-btn>
-            <v-spacer />
-            <v-btn color="primary" href="/forgot-password" style="margin-bottom: 10px">
-              Forgot Password?
-            </v-btn>
-            <v-spacer />
-            <v-btn color="primary" href="/register">
-              Register
-            </v-btn>
           </v-form>
+          <!--            <v-checkbox-->
+          <!--              v-model="checkbox"-->
+          <!--              label="Do you agree?"-->
+          <!--              required-->
+          <!--              :rules="[v => !!v || 'You must agree to continue!']"-->
+          <!--            />-->
+          <v-btn style="margin-bottom: 10px" type="submit" @click="login">Login</v-btn>
+          <v-spacer />
+          <v-btn color="primary" href="/forgot-password" style="margin-bottom: 10px">
+            Forgot Password?
+          </v-btn>
+          <v-spacer />
+          <v-btn color="primary" href="/register">
+            Register
+          </v-btn>
+
         </v-card-text>
       </v-card>
     </v-col>
@@ -46,6 +47,8 @@
 <script>
   export default {
     data: () => ({
+      currentUser: JSON.parse(localStorage.getItem('currentUser')) || null,
+      ws: null,
       valid: true,
       email: '',
       emailRules: [
@@ -67,18 +70,101 @@
       },
     },
     methods: {
-      login () {
-        if (this.$refs.form.validate()) {
-          if (!this.email || !this.password || !this.checkbox) {
-            alert('Login failed. Please check your email, password, and agree to the terms.');
+      async login () {
+        if (!this.$refs.form.validate()) {
+          alert('请检查输入是否正确');
+          return;
+        }
+
+        try {
+          const response = await fetch('http://localhost:8082/api/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email: this.email, password: this.password }),
+          });
+
+          const data = await response.json();
+          if (response.ok) {
+            this.currentUser = data.user;
+            localStorage.setItem('currentUser', JSON.stringify(this.currentUser));
+            alert('登录成功！');
+            // location.reload();
+            console.log(data);
+            // 先跳转再初始化WebSocket
+            this.$router.push({ name: 'main' }).then(() => {
+              this.initWebSocket();
+            }).catch(err => {
+              console.error('路由跳转失败:', err);
+            });
+
+            //移除updateUserInfo调用，除非确实需要
           } else {
-            console.log('Logging in with email:', this.email);
-          // TODO: Implement login functionality
+            alert(data.detail);
           }
-        } else {
-          alert('Login failed. Please check your email, password, and agree to the terms.');
+        } catch (error) {
+          console.error('登录失败:', error);
+          alert('登录失败，请稍后重试');
+        }
+      },
+
+      initWebSocket () {
+        const currentUser = this.currentUser;
+        if (!currentUser) {
+          console.error('无法初始化WebSocket: 无当前用户');
+          return;
+        }
+
+        this.ws = new WebSocket(`ws://localhost:8082/ws/chat/?user_email=${currentUser.email}`);
+
+        this.ws.onopen = () => {
+          console.log('WebSocket连接已建立');
+        };
+
+        this.ws.onmessage = event => {
+          const message = JSON.parse(event.data);
+          this.displayMessage(message);
+        };
+
+        this.ws.onclose = () => {
+          console.log('WebSocket连接已关闭');
+          setTimeout(this.initWebSocket, 3000); // 自动重连
+        };
+
+        this.ws.onerror = error => {
+          console.error('WebSocket错误:', error);
+        };
+      },
+
+      displayMessage (message) {
+        const isSelf = message.username === this.currentUser?.username;
+        const messagesContainer = document.querySelector('.messages-container');
+        const messageHtml = `
+        <div class="message ${isSelf ? 'sent' : 'received'} mb-3">
+          <div class="message-header">
+            <img src="${message.avatar}" class="rounded-circle" alt="用户头像">
+            <span class="sender-name">${message.username}</span>
+            <span class="message-time">${message.time}</span>
+            <span class="debug-info">[Debug: ${new Date().toLocaleTimeString()}]</span>
+          </div>
+          <div class="message-content p-2 bg-light rounded">
+            ${message.content}
+          </div>
+        </div>
+      `;
+        messagesContainer.insertAdjacentHTML('beforeend', messageHtml);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+      },
+
+      updateUserInfo () {
+        if (this.currentUser) {
+          const usernameInput = document.getElementById('username');
+          const emailInput = document.getElementById('email');
+          if (usernameInput) usernameInput.value = this.currentUser.username;
+          if (emailInput) emailInput.value = this.currentUser.email;
         }
       },
     },
-  }
+  };
 </script>

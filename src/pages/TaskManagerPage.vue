@@ -1,5 +1,5 @@
 <template>
-  <Vbar />
+  <Vbar2 />
   <v-app>
     <v-main>
       <v-container>
@@ -12,5 +12,5 @@
 <script setup>
 import TaskManager from "@/components/TaskManager.vue";
 import TaskTimeline from "@/components/TaskTimeline.vue";
-import Vbar from '@/components/Vbar.vue';
+import Vbar2 from '@/components/Vbar2.vue';
 </script>

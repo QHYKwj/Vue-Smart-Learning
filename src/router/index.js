@@ -8,6 +8,7 @@
 import { createRouter, createWebHistory } from 'vue-router/auto'
 
 import index from '@/pages/index.vue'
+
 const routes = [
   {
     path: '/',
@@ -15,14 +16,18 @@ const routes = [
   },
   {
     path: '/home',
+    name: 'main',
     component: () => import('@/pages/Home.vue'),
+    meta: { requiresAuth: true },
   },
   {
     path:'/login',
+    name: 'login',
     component: () => import('@/pages/LoginPage.vue'),
   },
   {
     path: '/register',
+    name: 'register',
     component: () =>import('@/pages/RegisterPage.vue'),
   },
   {
@@ -40,6 +45,10 @@ const routes = [
   {
     path: '/settings',
     component: () =>import('@/pages/SettingPage.vue'),
+  },
+  {
+    path: '/:forgot-password',
+    component: () =>import('@/pages/ForgotPasswordPage.vue'),
   },
 ]
 const router = createRouter({
@@ -61,9 +70,17 @@ router.onError((err, to) => {
     console.error(err)
   }
 })
-
 router.isReady().then(() => {
   localStorage.removeItem('vuetify:dynamic-reload')
 })
+router.beforeEach((to, from, next) => {
+  const user = JSON.parse(localStorage.getItem('currentUser'));
+
+  if (to.meta.requiresAuth && !user) {
+    next({ name: 'login' });
+  } else {
+    next();
+  }
+});
 
 export default router

@@ -56,10 +56,6 @@ export default {
         { title: "Home", icon: "mdi-home" ,route: "/" },
         { title: "Login", icon: "mdi-account", route: "/login" },
         { title: "Register", icon: "mdi-human-greeting-variant" ,route: "/register" },
-        { title: "Task Management", icon: "mdi-link", route: "/task-manager" },
-        { title: "Online Chat", icon: "mdi-chat" ,route: "/online" },
-        { title: "Video Conference", icon: "mdi-video", route: "/video" },
-        { title: "Settings", icon: "mdi-menu" ,route: "/settings" },
       ],
       mini: true,
     }
