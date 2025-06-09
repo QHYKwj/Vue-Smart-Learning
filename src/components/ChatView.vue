@@ -41,23 +41,24 @@
       <v-text-field class="search-bar mb-3" outlined placeholder="搜索聊天记录..." />
 
       <!-- 消息列表区域 -->
-      <v-container class="messages-container mb-3" style="height: 400px; overflow-y: auto;">
-        <v-card class="message received mb-3" outlined>
+      <v-container class="messages-container mb-3" style="height: 400px; overflow-y: auto;" ref="messagesContainer">
+        <v-card v-for="(message, index) in messages" :key="index"
+               :class="['message mb-3', message.username === currentUser?.username ? 'sent' : 'received']"
+               outlined>
           <v-card-title class="message-header">
             <v-avatar size="30">
-              <span class="white--text text-h5" >CJ</span>
+              <span class="white--text text-h5">{{ message.username.substring(0, 2).toUpperCase() }}</span>
             </v-avatar>
-            <span class="sender-name ml-4">李四</span>
-            <span class="message-time">10:30</span>
+            <span class="sender-name ml-4">{{ message.username }}</span>
+            <span class="message-time">{{ message.time }}</span>
           </v-card-title>
           <v-card-text class="message-content pa-2 d-flex justify-end">
-            这是一条示例消息
+            {{ message.content }}
             <v-spacer />
             <v-icon small>mdi-check-circle</v-icon>
             <span class="read-status grey--text">已读</span>
           </v-card-text>
         </v-card>
-        <!-- 更多消息... -->
       </v-container>
 
       <!-- 输入区域 -->
@@ -76,8 +77,8 @@
             <v-icon>mdi-video</v-icon>
           </v-btn>
         </v-card-actions>
-        <v-textarea class="mb-2" outlined placeholder="输入消息..." rows="2" />
-        <v-btn class="btn btn-primary" color="primary">
+        <v-textarea class="mb-2" outlined placeholder="输入消息..." rows="2" v-model="messageInput" @keypress.enter.prevent="sendMessage" />
+        <v-btn class="btn btn-primary" color="primary" @click="sendMessage">
           <v-icon left>mdi-send</v-icon> 发送
         </v-btn>
       </v-card-text>
@@ -86,8 +87,89 @@
 </template>
 
 <script>
+      import API from '@/config/api';
   export default {
     name: 'ChatView',
+    data() {
+      return {
+        ws: null,
+        currentUser: null,
+        messages: [],
+        messageInput: ''
+      }
+    },
+    mounted() {
+      // 从 localStorage 获取当前用户信息
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        this.currentUser = JSON.parse(savedUser);
+        this.initWebSocket();
+      }
+    },
+    beforeDestroy() {
+      // 组件销毁前关闭 WebSocket 连接
+      if (this.ws) {
+        this.ws.close();
+      }
+    },
+    methods: {
+      initWebSocket() {
+        if (!this.currentUser) return;
+
+
+
+        // 修改WebSocket连接
+        this.ws = new WebSocket(API.WS_CHAT(this.currentUser.email));
+
+        this.ws.onopen = () => {
+          console.log('WebSocket连接已建立');
+        };
+
+        this.ws.onmessage = (event) => {
+          const message = JSON.parse(event.data);
+          this.displayMessage(message);
+        };
+
+        this.ws.onclose = () => {
+          console.log('WebSocket连接已关闭');
+          setTimeout(() => this.initWebSocket(), 3000);
+        };
+
+        this.ws.onerror = (error) => {
+          console.error('WebSocket错误:', error);
+        };
+      },
+      displayMessage(message) {
+        this.messages.push(message);
+        // 滚动到底部
+        this.$nextTick(() => {
+          if (this.$refs.messagesContainer) {
+            this.$refs.messagesContainer.scrollTop = this.$refs.messagesContainer.scrollHeight;
+          }
+        });
+      },
+      sendMessage() {
+        if (!this.currentUser) {
+          alert('请先登录');
+          return;
+        }
+
+        const content = this.messageInput.trim();
+        if (!content) return;
+
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          console.log('发送消息:', content);
+          const message = {
+            username: this.currentUser.username,
+            content: content
+          };
+          this.ws.send(JSON.stringify(message));
+          this.messageInput = '';
+        } else {
+          alert('WebSocket 连接已断开，请刷新页面重试');
+        }
+      }
+    }
   }
 </script>
 
@@ -100,5 +182,23 @@
 }
 .online-status.online {
   color: green;
+}
+.message.sent {
+  margin-left: auto;
+  margin-right: 0;
+}
+.message.received {
+  margin-right: auto;
+  margin-left: 0;
+}
+.message {
+  max-width: 80%;
+}
+.message-content {
+  position: relative;
+}
+.read-status {
+  font-size: 0.8em;
+  color: #6c757d;
 }
 </style>

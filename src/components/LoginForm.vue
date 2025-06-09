@@ -45,6 +45,7 @@
 </template>
 
 <script>
+      import API from '@/config/api';
   export default {
     data: () => ({
       currentUser: JSON.parse(localStorage.getItem('currentUser')) || null,
@@ -77,7 +78,9 @@
         }
 
         try {
-          const response = await fetch('http://localhost:8082/api/login', {
+
+          // 修改fetch调用
+          const response = await fetch(API.LOGIN, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -116,7 +119,8 @@
           return;
         }
 
-        this.ws = new WebSocket(`ws://localhost:8082/ws/chat/?user_email=${currentUser.email}`);
+        // 修改WebSocket连接
+        this.ws = new WebSocket(API.WS_CHAT(currentUser.email));
 
         this.ws.onopen = () => {
           console.log('WebSocket连接已建立');

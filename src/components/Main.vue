@@ -250,7 +250,10 @@
 import axios from 'axios'
 
 // 配置基础API URL
-const API_BASE_URL = 'http://localhost:8082'
+import API from '@/config/api';
+
+// 替换硬编码的API_BASE_URL
+const API_BASE_URL = import.meta.env.VITE_APP_API_BASE_URL;
 
 export default {
   name: 'Main',
