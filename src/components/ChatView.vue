@@ -87,7 +87,7 @@
 </template>
 
 <script>
-      import API from '@/config/api';
+  import API from '@/config/api';
   export default {
     name: 'ChatView',
     data() {
