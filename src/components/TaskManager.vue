@@ -42,7 +42,7 @@
           class="mt-3"
           color="primary"
           type="submit"
-          @click="createTask"
+          @click="resetForm"
         >
           reset
         </v-btn>
@@ -53,16 +53,19 @@
       </v-list>
     </v-card-text>
   </v-card>
-  <TaskTimeline :taskTitle="taskTitle" :taskDescription="taskDescription" :picker="picker"/>
+  <TaskTimeline ref="timeline" :picker="picker" :task-description="taskDescription" :task-title="taskTitle" />
 </template>
 
 <script>
-  import TaskTimeline from "@/components/TaskTimeline.vue";
+  import API from '@/config/api';
+  import TaskTimeline from '@/components/TaskTimeline.vue';
+  import axios from 'axios';
 
   export default {
-    components: {TaskTimeline},
+    components: { TaskTimeline },
     data () {
       return {
+        currentUser: JSON.parse(localStorage.getItem('currentUser')) || null,
         taskTitle: '',
         taskDescription: '',
         picker: (new Date(Date.now() - (new Date()).getTimezoneOffset() * 60000)).toISOString().substr(0, 10),
@@ -70,9 +73,27 @@
     },
     methods: {
       createTask () {
+        const email = this.currentUser.email; // 替换成实际用户邮箱
+        axios.post(API.ADD_TASK, new URLSearchParams({
+          email,
+          title: this.taskTitle,
+          description: this.taskDescription,
+          due_date: this.picker,
+        }))// 调用后端接口创建任务
+          .then(response => {
+            console.log(response.data);
+            this.$refs.timeline.fetchTasks(); // 通知子组件刷新任务列表
+            this.resetForm(); // 重置表单
+          })
+          .catch(error => {
+            console.error('创建任务失败:', error.response?.data || error.message);
+          });
+      },
+      resetForm () {
         this.taskTitle = '';
         this.taskDescription = '';
       },
+
     },
   }
 </script>

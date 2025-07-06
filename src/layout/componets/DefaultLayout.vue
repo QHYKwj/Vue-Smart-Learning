@@ -40,17 +40,17 @@
   <v-container fluid>
     <h1>Introduction</h1>
     <Introduce />
-    <v-row>
-      <v-col cols="11" md="4">
-        <IntroduceCard />
-      </v-col>
-      <v-col cols="11" md="4">
-        <IntroduceCard />
-      </v-col>
-      <v-col cols="11" md="4">
-        <IntroduceCard />
-      </v-col>
-    </v-row>
+<!--    <v-row>-->
+<!--      <v-col cols="11" md="4">-->
+<!--        <IntroduceCard />-->
+<!--      </v-col>-->
+<!--      <v-col cols="11" md="4">-->
+<!--        <IntroduceCard />-->
+<!--      </v-col>-->
+<!--      <v-col cols="11" md="4">-->
+<!--        <IntroduceCard />-->
+<!--      </v-col>-->
+<!--    </v-row>-->
   </v-container>
 </template>
 

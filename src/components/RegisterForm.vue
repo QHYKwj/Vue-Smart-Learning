@@ -52,6 +52,7 @@
   </v-row>
 </template>
 <script>
+    import API from '@/config/api';
   function displayMessage (message) {
     const currentUser = this.currentUser;
     console.log('显示消息被调用:', message); // 添加调试日志
@@ -126,7 +127,7 @@
       password2: '',
       password2Rules: [
         v => !!v || 'Password is required',
-        v => v === this.password || 'Passwords must match',
+        function(v) { return v === this.password || 'Passwords must match'; } // 使用普通函数而不是箭头函数
       ],
       name: '',
       nameRules: [
@@ -162,34 +163,40 @@
       async register () {
         if (this.$refs.form.validate()) {
           if (!this.email || !this.password || !this.password2 || !this.name) {
-            alert('Login failed. Please check your email, password, and agree to the terms.');
+            alert('注册失败。请检查您的邮箱、密码和用户名。');
           } else {
-            console.log('Logging in with email:', this.email);
-            // TODO: Implement login functionality
+            try {
+              // 移除错误的WebSocket连接代码
+              // ws = new WebSocket(API.WS_CHAT(currentUser.email));
+              
+              // 修改fetch调用
+              const response = await fetch(API.REGISTER, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                  username: this.name, // 使用this.name而不是this.username
+                  email: this.email, 
+                  password: this.password 
+                }),
+              });
+              
+              const data = await response.json();
+              if (response.ok) {
+                alert('注册成功！');
+                // 使用 router 跳转到登录页面
+                this.$router.push({ name: 'login' });
+              } else {
+                alert(data.detail);
+              }
+            } catch (error) {
+              console.error('注册失败:', error);
+              alert('注册失败，请稍后重试');
+            }
           }
         } else {
-          alert('Login failed. Please check your email, password, and agree to the terms.');
-        }
-        try {
-          const response = await fetch('http://localhost:8082/api/register', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ username: this.username, email: this.email, password: this.password }),
-          });
-
-          const data = await response.json();
-          if (response.ok) {
-            alert('注册成功！');
-            // 使用 router 跳转到登录页面
-            this.$router.push({ name: 'login' });
-          } else {
-            alert(data.detail);
-          }
-        } catch (error) {
-          console.error('注册失败:', error);
-          alert('注册失败，请稍后重试');
+          alert('注册失败。请检查您的输入是否符合要求。');
         }
       },
     },

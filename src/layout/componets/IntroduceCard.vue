@@ -1,21 +1,21 @@
 <template>
   <v-card
-    :loading="loading"
     class="mx-auto my-12"
+    :loading="loading"
     max-width="600"
   >
-    <template slot="progress">
+    <template #progress>
       <v-progress-linear
         color="deep-purple"
         height="10"
         indeterminate
-      ></v-progress-linear>
+      />
     </template>
 
     <v-img
       height="250"
       src="https://cdn.vuetifyjs.com/images/cards/cooking.png"
-    ></v-img>
+    />
 
     <v-card-title>Cafe Badilico</v-card-title>
 
@@ -25,13 +25,13 @@
         class="mx-0"
       >
         <v-rating
-          :value="4.5"
           color="amber"
           dense
           half-increments
           readonly
           size="14"
-        ></v-rating>
+          :value="4.5"
+        />
 
         <div class="grey--text ms-4">
           4.5 (413)
@@ -45,7 +45,7 @@
       <div>Small plates, salads & sandwiches - an intimate setting with 12 indoor seats plus patio seating.</div>
     </v-card-text>
 
-    <v-divider class="mx-4"></v-divider>
+    <v-divider class="mx-4" />
 
     <v-card-title>Tonight's availability</v-card-title>
 
@@ -77,18 +77,18 @@
   </v-card>
 </template>
 <script>
-export default {
-  data: () => ({
-    loading: false,
-    selection: 1,
-  }),
+  export default {
+    data: () => ({
+      loading: false,
+      selection: 1,
+    }),
 
-  methods: {
-    reserve () {
-      this.loading = true
+    methods: {
+      reserve () {
+        this.loading = true
 
-      setTimeout(() => (this.loading = false), 2000)
+        setTimeout(() => (this.loading = false), 2000)
+      },
     },
-  },
-}
+  }
 </script>

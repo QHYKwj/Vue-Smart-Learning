@@ -1,24 +1,9 @@
 <template>
-  <v-carousel v-model="model"
-  height="90vh"
-  >
-    <v-carousel-item
-      v-for="(color, i) in colors"
-      :key="color"
-    >
-      <v-sheet
-        :color="color"
-        height="100%"
-        tile
-      >
-        <v-row
-          align="center"
-          class="fill-height"
-          justify="center"
-        >
-          <div class="text-h2">
-            Slide {{ i + 1 }}
-          </div>
+  <v-carousel v-model="model" height="90vh">
+    <v-carousel-item v-for="(src) in slides" :key="src">
+      <v-sheet height="100%" tile>
+        <v-row align="center" class="fill-height" justify="center">
+          <v-img contain :src="src" />
         </v-row>
       </v-sheet>
     </v-carousel-item>
@@ -28,15 +13,16 @@
   export default {
     data: () => ({
       model: 0,
-      colors: [
-        'primary',
-        'secondary',
-        'yellow darken-2',
-        'red',
-        'orange',
+      slides: [
+        'https://picsum.photos/1920/1080?random',
+        'public/1.jpg',
+        'public/2.jpg',
+        'public/3.jpg',
+        'public/4.jpg',
+        'public/5.jpg',
       ],
     }),
-  }
+  };
 </script>
 <style scoped>
 .full-screen-carousel {

@@ -10,7 +10,20 @@
           </v-card-title>
           <v-card-text>
             <v-list id="onlineVideoUsers">
-              <!-- 用户列表将通过 JavaScript 动态添加 -->
+              <v-list-item
+                v-for="user in onlineUsers"
+                :key="user.peer_id"
+                class="d-flex justify-space-between align-center"
+              >
+                <v-list-item-title>{{ user.username }}</v-list-item-title>
+                <v-btn
+                  small
+                  color="primary"
+                  @click="startCall(user.peer_id)"
+                >
+                  呼叫
+                </v-btn>
+              </v-list-item>
             </v-list>
           </v-card-text>
         </v-card>
@@ -60,7 +73,7 @@
                 outlined
                 placeholder="请输入对方ID"
               />
-              <v-btn id="callBtn" class="ml-2" color="primary" @click="handleCallBtnClick">开始通话</v-btn>
+              <v-btn id="callBtn" color="primary" @click="handleCallBtnClick">开始通话</v-btn>
             </v-col>
           </v-row>
         </v-container>
@@ -72,39 +85,54 @@
 <script>
   import Peer from 'peerjs';
 
+  import API from '@/config/api';
+
   export default {
     data () {
       return {
-        currentUser: null, // 假设你已经有一个方法来设置这个值
+        currentUser: null,
         peer: null,
         localStream: null,
         myPeerId: '',
         youPeerId: '',
+        onlineUsers: [],
+        updateInterval: null
       };
     },
     mounted () {
-      // 如果视频页面是默认显示的页面，可以在这里调用 initVideoPage()
-      if (document.getElementById('videoPage')) {
-        this.showPage('videoPage');
+      // 从localStorage获取当前用户信息
+      const userJson = localStorage.getItem('currentUser');
+      if (userJson) {
+        this.currentUser = JSON.parse(userJson);
       }
+
+      // 初始化视频页面
+      this.initVideoPage();
 
       // 在用户离开页面时清理
       window.addEventListener('beforeunload', this.unregisterUser);
     },
     beforeUnmount () {
+      // 清理定时器和事件监听器
+      if (this.updateInterval) {
+        clearInterval(this.updateInterval);
+      }
       window.removeEventListener('beforeunload', this.unregisterUser);
+
+      // 注销视频用户
+      this.unregisterUser();
+
+      // 关闭视频流
+      if (this.localStream) {
+        this.localStream.getTracks().forEach(track => track.stop());
+      }
+
+      // 关闭Peer连接
+      if (this.peer) {
+        this.peer.destroy();
+      }
     },
     methods: {
-      showPage (pageId) {
-        const pages = document.querySelectorAll('.content-container');
-        pages.forEach(page => page.classList.remove('active'));
-        document.getElementById(pageId).classList.add('active');
-
-        // 当切换到视频页面时初始化
-        if (pageId === 'videoPage') {
-          this.initVideoPage();
-        }
-      },
       getUserMedia (constrains, success, error) {
         if (navigator.mediaDevices.getUserMedia) {
           navigator.mediaDevices.getUserMedia(constrains).then(success).catch(error);
@@ -134,13 +162,14 @@
               this.peer = new Peer();
 
               await new Promise((resolve, reject) => {
-                this.peer.on('open', id => {
+                this.peer.on('open', async id => {
                   try {
                     console.log('获取到 Peer ID:', id);
                     this.myPeerId = id;
 
                     // 注册视频用户
-                    fetch('http://localhost:8082/api/video/register', {
+                    // 修改fetch调用
+                    const response = await fetch(API.VIDEO_REGISTER, {
                       method: 'POST',
                       headers: {
                         'Content-Type': 'application/json',
@@ -149,21 +178,17 @@
                         username: this.currentUser.username,
                         peer_id: id,
                       }),
-                    })
-                      .then(async res => {
-                        if (!res.ok) {
-                          throw new Error('注册视频用户失败');
-                        }
+                    });
 
-                        // 开始定期获取在线用户列表
-                        this.updateOnlineUsers();
-                        setInterval(() => this.updateOnlineUsers(), 5000);
+                    if (!response.ok) {
+                      throw new Error('注册视频用户失败');
+                    }
 
-                        resolve();
-                      })
-                      .catch(error => {
-                        reject(error);
-                      });
+                    // 开始定期获取在线用户列表
+                    this.updateOnlineUsers();
+                    this.updateInterval = setInterval(() => this.updateOnlineUsers(), 5000);
+
+                    resolve();
                   } catch (error) {
                     reject(error);
                   }
@@ -197,22 +222,12 @@
       },
       async updateOnlineUsers () {
         try {
-          const response = await fetch('http://localhost:8082/api/video/users');
+          // 修改另一个fetch调用
+          const response = await fetch(API.VIDEO_USERS);
           const data = await response.json();
-          const usersList = document.getElementById('onlineVideoUsers');
-          usersList.innerHTML = '';
 
-          data.users.forEach(user => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item d-flex justify-content-between align-items-center';
-            li.innerHTML = `
-            ${user.username}
-            <button class="btn btn-sm btn-primary" onclick="startCall('${user.peer_id}')">
-              呼叫
-            </button>
-          `;
-            usersList.appendChild(li);
-          });
+          // 更新在线用户列表
+          this.onlineUsers = data.users;
         } catch (error) {
           console.error('获取在线用户失败:', error);
         }
@@ -242,7 +257,8 @@
       },
       unregisterUser () {
         if (this.currentUser) {
-          fetch('http://localhost:8082/api/video/unregister', {
+          // 修改第三个fetch调用
+          fetch(API.VIDEO_UNREGISTER, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -266,5 +282,16 @@
 </script>
 
 <style scoped>
-/* 你的样式代码 */
+.video-container {
+  width: 100%;
+}
+
+.video-box {
+  margin-bottom: 20px;
+}
+
+video {
+  background-color: #000;
+  border-radius: 4px;
+}
 </style>

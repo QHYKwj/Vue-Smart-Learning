@@ -6,7 +6,7 @@
           <v-icon left color="primary">mdi-account-cog</v-icon>
           <span class="text-h5">账户设置</span>
         </v-card-title>
-        
+
         <v-card-text>
           <!-- 加载状态 -->
           <div v-if="loading" class="text-center py-8">
@@ -17,12 +17,12 @@
             />
             <p class="mt-4 text-body-1">加载用户信息中...</p>
           </div>
-          
+
           <!-- 设置表单 -->
-          <v-form 
+          <v-form
             v-else
-            ref="form" 
-            v-model="valid" 
+            ref="form"
+            v-model="valid"
             lazy-validation
             @submit.prevent="updateProfile"
           >
@@ -36,7 +36,7 @@
               <strong>当前信息：</strong>
               {{ originalData.username }} ({{ originalData.email }})
             </v-alert>
-            
+
             <!-- 用户名 -->
             <v-text-field
               v-model="formData.username"
@@ -51,7 +51,7 @@
               :hint="usernameChanged ? '用户名将被更新' : ''"
               persistent-hint
             />
-            
+
             <!-- 邮箱 -->
             <v-text-field
               v-model="formData.email"
@@ -67,7 +67,7 @@
               :hint="emailChanged ? '邮箱将被更新' : ''"
               persistent-hint
             />
-            
+
             <!-- 密码区域 -->
             <v-expansion-panels class="mt-4" flat>
               <v-expansion-panel>
@@ -92,7 +92,7 @@
                     hint="留空则不修改密码，至少6位字符"
                     persistent-hint
                   />
-                  
+
                   <v-text-field
                     v-if="formData.password"
                     v-model="confirmPassword"
@@ -110,9 +110,9 @@
                 </v-expansion-panel-content>
               </v-expansion-panel>
             </v-expansion-panels>
-            
+
             <v-divider class="my-6" />
-            
+
             <!-- 操作按钮 -->
             <v-row>
               <v-col cols="12" sm="6">
@@ -142,7 +142,7 @@
                 </v-btn>
               </v-col>
             </v-row>
-            
+
             <!-- 更改提示 -->
             <v-alert
               v-if="hasChanges"
@@ -162,7 +162,7 @@
         </v-card-text>
       </v-card>
     </v-col>
-    
+
     <!-- 成功提示 -->
     <v-snackbar
       v-model="successSnackbar"
@@ -181,7 +181,7 @@
         </v-btn>
       </template>
     </v-snackbar>
-    
+
     <!-- 错误提示 -->
     <v-snackbar
       v-model="errorSnackbar"
@@ -205,38 +205,39 @@
 
 <script>
 import axios from 'axios'
+import API from '@/config/api';
 
 export default {
   name: 'UserSettings',
-  
+
   data: () => ({
     valid: false,
     loading: true,
     updating: false,
-    
+
     // 表单数据
     formData: {
       username: '',
       email: '',
       password: ''
     },
-    
+
     // 原始数据
     originalData: {
       username: '',
       email: ''
     },
-    
+
     confirmPassword: '',
     showPassword: false,
     showConfirmPassword: false,
-    
+
     // 提示消息
     successSnackbar: false,
     successMessage: '',
     errorSnackbar: false,
     errorMessage: '',
-    
+
     // 验证规则
     nameRules: [
         v => !!v || '用户名不能为空',
@@ -253,7 +254,7 @@ export default {
         v => !v || v.length <= 50 || '密码不能超过50位字符'
       ]
   }),
-  
+
   computed: {
       confirmPasswordRules() {
         return [
@@ -261,7 +262,7 @@ export default {
           v => !this.formData.password || v === this.formData.password || '两次输入的密码不一致'
         ]
       },
-      
+
       hasChanges() {
         return (
           this.usernameChanged ||
@@ -269,28 +270,28 @@ export default {
           (!!this.formData.password && this.formData.password.trim() !== '')
         )
       },
-      
+
       usernameChanged() {
         return this.formData.username.trim() !== this.originalData.username
       },
-      
+
       emailChanged() {
         return this.formData.email.trim() !== this.originalData.email
       },
-    
+
     currentUserEmail() {
       // 获取当前用户邮箱的多种方式
-      return localStorage.getItem('userEmail') || 
+      return localStorage.getItem('userEmail') ||
              this.getCurrentUserFromStorage()?.email ||
-             this.$store?.state?.user?.email || 
+             this.$store?.state?.user?.email ||
              ''
     }
   },
-  
+
   async mounted() {
     await this.loadUserProfile()
   },
-  
+
   methods: {
     // 从localStorage获取当前用户
     getCurrentUserFromStorage() {
@@ -307,7 +308,7 @@ export default {
     async loadUserProfile() {
       try {
         this.loading = true
-        
+
         // 检查是否有当前用户邮箱
         if (!this.currentUserEmail) {
           this.showError('未找到当前用户信息，请重新登录')
@@ -316,15 +317,15 @@ export default {
           }, 2000)
           return
         }
-        
+
         console.log('正在获取用户信息，邮箱:', this.currentUserEmail)
-        
-        const response = await axios.get('http://localhost:8082/api/user/profile', {
+
+        const response = await axios.get(API.USER_PROFILE, {
           params: { email: this.currentUserEmail }
         })
-        
+
         console.log('用户信息响应:', response.data)
-        
+
         // 处理响应数据
         let user
         if (response.data.user) {
@@ -334,31 +335,31 @@ export default {
         } else {
           throw new Error('服务器返回数据格式错误')
         }
-        
+
         // 验证用户数据完整性
         if (!user.username || !user.email) {
           throw new Error('用户数据不完整')
         }
-        
+
         // 设置表单数据
         this.formData.username = user.username
         this.formData.email = user.email
         this.formData.password = ''
-        
+
         // 保存原始数据
         this.originalData.username = user.username
         this.originalData.email = user.email
-        
+
         console.log('用户信息加载成功')
-        
+
       } catch (error) {
         console.error('加载用户信息失败:', error)
-        
+
         let errorMessage = '加载用户信息失败'
-        
+
         if (error.response) {
           errorMessage = error.response.data?.detail || `服务器错误 (${error.response.status})`
-          
+
           // 认证错误，需要重新登录
           if (error.response.status === 401 || error.response.status === 404) {
             errorMessage += '，请重新登录'
@@ -369,81 +370,82 @@ export default {
         } else if (error.message) {
           errorMessage = error.message
         }
-        
+
         this.showError(errorMessage)
-        
+
       } finally {
         this.loading = false
       }
     },
-    
+
     async updateProfile() {
       if (!this.$refs.form.validate()) {
         this.showError('请检查输入信息')
         return
       }
-      
+
       if (this.formData.password && this.formData.password !== this.confirmPassword) {
         this.showError('两次输入的密码不一致')
         return
       }
-      
+
       try {
         this.updating = true
-        
+
         // 构建更新数据 - 修复：只传递有值的字段
         const updateData = {
           email: this.currentUserEmail // 当前用户邮箱作为查找依据
         }
-        
+
         // 只有当用户名实际改变时才添加该字段
         if (this.usernameChanged && this.formData.username.trim()) {
           updateData.new_username = this.formData.username.trim()
         }
-        
+
         // 只有当邮箱实际改变时才添加该字段
         if (this.emailChanged && this.formData.email.trim()) {
           updateData.new_email = this.formData.email.trim()
         }
-        
+
         // 只有当密码有值时才添加该字段
         if (this.formData.password && this.formData.password.trim()) {
           updateData.new_password = this.formData.password.trim()
         }
-        
+
         console.log('发送更新请求:', updateData)
-        
+
         // 发送请求时使用正确的 Content-Type
-        const response = await axios.put('http://localhost:8082/api/user/profile', updateData, {
+        // 修改axios调用
+        const response = await axios.get(API.USER_PROFILE, {
           headers: {
             'Content-Type': 'application/json'
           }
         })
-        
+
         console.log('更新响应:', response.data)
-        
+
         // 更新成功
         this.showSuccess(response.data.message || '信息更新成功')
-        
+
         // 如果邮箱或用户名变更，需要更新本地存储
         if (updateData.new_email || updateData.new_username) {
           this.updateLocalStorage(updateData)
         }
-        
+
         // 重新加载数据
         await this.loadUserProfile()
-        
+
         // 清空密码字段
         this.formData.password = ''
         this.confirmPassword = ''
-        
+
       } catch (error) {
         console.error('更新失败:', error)
         let message = '更新失败，请稍后重试'
-        
+
         if (error.response?.data?.detail) {
           message = error.response.data.detail
-          
+
           // 如果是验证错误，显示更详细的信息
           if (Array.isArray(error.response.data.detail)) {
             message = error.response.data.detail
@@ -453,7 +455,7 @@ export default {
             message = JSON.stringify(error.response.data.detail)
           }
         }
-        
+
         this.showError(message)
       } finally {
         this.updating = false
@@ -467,7 +469,7 @@ export default {
         if (updateData.new_email) {
           localStorage.setItem('userEmail', updateData.new_email)
         }
-        
+
         // 更新 currentUser
         const currentUser = this.getCurrentUserFromStorage()
         if (currentUser) {
@@ -479,7 +481,7 @@ export default {
           }
           localStorage.setItem('currentUser', JSON.stringify(currentUser))
         }
-        
+
         // 如果使用 Vuex，也要更新 store
         if (this.$store) {
           this.$store.commit('updateUser', {
@@ -487,12 +489,12 @@ export default {
             email: updateData.new_email || this.originalData.email
           })
         }
-        
+
       } catch (error) {
         console.error('更新本地存储失败:', error)
       }
     },
-    
+
     // 重置表单
     resetForm() {
       this.formData.username = this.originalData.username
@@ -501,13 +503,13 @@ export default {
       this.confirmPassword = ''
       this.$refs.form?.resetValidation()
     },
-    
+
     // 显示成功消息
     showSuccess(message) {
       this.successMessage = message
       this.successSnackbar = true
     },
-    
+
     // 显示错误消息
     showError(message) {
       this.errorMessage = message
