@@ -42,7 +42,7 @@
           class="mt-3"
           color="primary"
           type="submit"
-          @click="createTask"
+          @click="resetForm"
         >
           reset
         </v-btn>
@@ -83,12 +83,15 @@
           .then(response => {
             console.log(response.data);
             this.$refs.timeline.fetchTasks(); // 通知子组件刷新任务列表
-            this.taskTitle = '';
-            this.taskDescription = '';
+            this.resetForm(); // 重置表单
           })
           .catch(error => {
             console.error('创建任务失败:', error.response?.data || error.message);
           });
+      },
+      resetForm () {
+        this.taskTitle = '';
+        this.taskDescription = '';
       },
 
     },
